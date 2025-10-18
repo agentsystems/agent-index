@@ -1,0 +1,78 @@
+# Agent Definition for Demo Agent
+# See schema/agent.schema.json for all available fields
+
+# ============================================================================
+# CORE METADATA (Required)
+# ============================================================================
+
+developer: ironbirdlabs
+name: demo-agent
+version: 0.1.0
+description: Demo agent that returns historical events for a date and creates a story
+
+# ============================================================================
+# REPOSITORY INFORMATION
+# ============================================================================
+
+image_repository_url: docker.io/ironbirdlabs/demo-agent
+image_repository_access: public
+source_repository_url: https://github.com/ironbirdlabs/demo-agent
+source_repository_access: public
+
+# ============================================================================
+# DISCOVERY & CLASSIFICATION
+# ============================================================================
+
+listing_status: published
+context: general
+primary_function: research
+readiness_level: beta
+
+# ============================================================================
+# MODEL DEPENDENCIES (Required)
+# ============================================================================
+
+model_dependencies:
+  - gemma3:1b
+
+# ============================================================================
+# INPUT PARAMETERS SCHEMA
+# ============================================================================
+
+input_schema:
+  date:
+    required: true
+    label: Date
+    description: The date to look up historical events
+    type: string
+
+# ============================================================================
+# FACETS
+# ============================================================================
+
+facets:
+  latency: interactive
+  cost_profile: free
+
+  domains:
+    - text
+
+  modalities:
+    - text
+
+  model_tooling:
+    - LLM
+
+# ============================================================================
+# SEARCHABLE METADATA
+# ============================================================================
+
+tags:
+  - demo
+  - history
+  - storytelling
+  - educational
+
+capabilities:
+  - Look up historical events by date
+  - Generate creative stories from historical facts

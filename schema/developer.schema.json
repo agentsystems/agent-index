@@ -1,0 +1,100 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Developer Profile",
+  "description": "Metadata about an agent developer",
+  "type": "object",
+  "required": ["name", "developer"],
+  "properties": {
+    "name": {
+      "type": "string",
+      "description": "Display name of the developer or organization"
+    },
+    "developer": {
+      "type": "string",
+      "description": "Developer namespace (must match folder name, checked via GitHub fork ownership)",
+      "pattern": "^[a-zA-Z0-9]([a-zA-Z0-9-]*[a-zA-Z0-9])?$"
+    },
+    "type": {
+      "type": "string",
+      "description": "Type of developer",
+      "enum": ["individual", "organization", "company", "enterprise"]
+    },
+    "avatar_url": {
+      "type": ["string", "null"],
+      "description": "URL to developer avatar/logo",
+      "format": "uri"
+    },
+    "bio": {
+      "type": ["string", "null"],
+      "description": "Short biography or description"
+    },
+    "tagline": {
+      "type": ["string", "null"],
+      "description": "Short tagline or slogan"
+    },
+    "company": {
+      "type": ["string", "null"],
+      "description": "Company name"
+    },
+    "location": {
+      "type": ["string", "null"],
+      "description": "Geographic location"
+    },
+    "years_experience": {
+      "type": ["integer", "null"],
+      "description": "Years of experience in AI/ML"
+    },
+    "website": {
+      "type": ["string", "null"],
+      "description": "Developer website URL",
+      "format": "uri"
+    },
+    "support_email": {
+      "type": ["string", "null"],
+      "description": "Support contact email",
+      "format": "email"
+    },
+    "documentation_url": {
+      "type": ["string", "null"],
+      "description": "Documentation URL",
+      "format": "uri"
+    },
+    "twitter_handle": {
+      "type": ["string", "null"],
+      "description": "Twitter/X handle (without @)"
+    },
+    "linkedin_url": {
+      "type": ["string", "null"],
+      "description": "LinkedIn profile URL",
+      "format": "uri"
+    },
+    "discord_username": {
+      "type": ["string", "null"],
+      "description": "Discord username"
+    },
+    "expertise": {
+      "type": ["array", "null"],
+      "description": "Areas of expertise",
+      "items": {
+        "type": "string"
+      }
+    },
+    "featured_work": {
+      "type": ["array", "null"],
+      "description": "URLs to featured projects",
+      "items": {
+        "type": "string",
+        "format": "uri"
+      }
+    },
+    "open_to_collaboration": {
+      "type": ["boolean", "null"],
+      "description": "Whether open to collaboration"
+    },
+    "sponsor_url": {
+      "type": ["string", "null"],
+      "description": "Sponsorship URL (GitHub Sponsors, etc.)",
+      "format": "uri"
+    }
+  }
+}

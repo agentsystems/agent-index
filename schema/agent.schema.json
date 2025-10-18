@@ -1,0 +1,215 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Agent Definition",
+  "description": "Metadata about an AI agent",
+  "type": "object",
+  "required": ["name", "developer", "version", "description", "model_dependencies"],
+  "properties": {
+    "name": {
+      "type": "string",
+      "description": "Agent name (lowercase, alphanumeric, hyphens only)",
+      "pattern": "^[a-z0-9]([a-z0-9-]*[a-z0-9])?$"
+    },
+    "developer": {
+      "type": "string",
+      "description": "Developer GitHub username (must match folder name)"
+    },
+    "version": {
+      "type": "string",
+      "description": "Semantic version (e.g., 1.0.0)",
+      "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$"
+    },
+    "description": {
+      "type": "string",
+      "description": "Short description of what the agent does"
+    },
+    "model_dependencies": {
+      "type": "array",
+      "description": "Required AI models",
+      "items": {
+        "type": "string"
+      },
+      "minItems": 1
+    },
+    "context": {
+      "type": ["string", "null"],
+      "description": "Context in which the agent operates (e.g., 'code', 'data', 'general')"
+    },
+    "primary_function": {
+      "type": ["string", "null"],
+      "description": "Primary function category"
+    },
+    "readiness_level": {
+      "type": ["string", "null"],
+      "description": "Maturity level",
+      "enum": ["experimental", "beta", "production", "deprecated", null]
+    },
+    "listing_status": {
+      "type": ["string", "null"],
+      "description": "Publication status",
+      "enum": ["published", "unlisted", "archived", null]
+    },
+    "image_repository_url": {
+      "type": ["string", "null"],
+      "description": "Docker image URL (e.g., docker.io/user/agent:1.0.0)"
+    },
+    "image_repository_access": {
+      "type": ["string", "null"],
+      "description": "Image repository access level",
+      "enum": ["public", "private", null]
+    },
+    "source_repository_url": {
+      "type": ["string", "null"],
+      "description": "Source code repository URL",
+      "format": "uri"
+    },
+    "source_repository_access": {
+      "type": ["string", "null"],
+      "description": "Source repository access level",
+      "enum": ["public", "private", null]
+    },
+    "required_integrations": {
+      "type": ["array", "null"],
+      "description": "Required external integrations",
+      "items": {
+        "type": "object"
+      }
+    },
+    "required_egress": {
+      "type": ["array", "null"],
+      "description": "Required network egress URLs",
+      "items": {
+        "type": "string",
+        "format": "uri"
+      }
+    },
+    "input_types": {
+      "type": ["array", "null"],
+      "description": "Supported input data types",
+      "items": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string"
+          },
+          "mime_types": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        }
+      }
+    },
+    "output_types": {
+      "type": ["array", "null"],
+      "description": "Supported output data types",
+      "items": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string"
+          },
+          "mime_types": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        }
+      }
+    },
+    "input_schema": {
+      "type": ["object", "null"],
+      "description": "Input parameter schema",
+      "additionalProperties": {
+        "type": "object",
+        "properties": {
+          "required": {
+            "type": "boolean"
+          },
+          "label": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "type": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "facets": {
+      "type": ["object", "null"],
+      "description": "Flexible metadata facets for categorization",
+      "properties": {
+        "latency": {
+          "type": ["string", "null"]
+        },
+        "cost_profile": {
+          "type": ["string", "null"]
+        },
+        "domains": {
+          "type": ["array", "null"],
+          "items": {
+            "type": "string"
+          }
+        },
+        "modalities": {
+          "type": ["array", "null"],
+          "items": {
+            "type": "string"
+          }
+        },
+        "model_tooling": {
+          "type": ["array", "null"],
+          "items": {
+            "type": "string"
+          }
+        },
+        "industries": {
+          "type": ["array", "null"],
+          "items": {
+            "type": "string"
+          }
+        },
+        "integrations": {
+          "type": ["array", "null"],
+          "items": {
+            "type": "string"
+          }
+        }
+      },
+      "additionalProperties": true
+    },
+    "tags": {
+      "type": ["array", "null"],
+      "description": "Searchable tags",
+      "items": {
+        "type": "string"
+      }
+    },
+    "capabilities": {
+      "type": ["array", "null"],
+      "description": "Agent capabilities",
+      "items": {
+        "type": "string"
+      }
+    },
+    "author": {
+      "type": ["string", "null"],
+      "description": "Original author name"
+    },
+    "created_at": {
+      "type": ["string", "null"],
+      "description": "ISO 8601 creation timestamp",
+      "format": "date-time"
+    },
+    "last_updated": {
+      "type": ["string", "null"],
+      "description": "ISO 8601 last update timestamp",
+      "format": "date-time"
+    }
+  }
+}
