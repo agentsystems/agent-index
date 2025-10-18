@@ -227,9 +227,17 @@ class IndexBuilder:
         print(f"✅ developers.json ({len(developers_list)} developers)")
 
         # Build agents index
-        agents_list = [
-            {
-                'developer': agent['developer'],
+        agents_list = []
+        for agent in self.agents:
+            if agent.get('listing_status') != 'published':
+                continue
+
+            developer_name = agent['developer']
+            developer_data = self.developers.get(developer_name, {})
+
+            agents_list.append({
+                # Core fields
+                'developer': developer_name,
                 'name': agent['name'],
                 'version': agent['version'],
                 'description': agent.get('description'),
@@ -237,12 +245,29 @@ class IndexBuilder:
                 'primary_function': agent.get('primary_function'),
                 'readiness_level': agent.get('readiness_level'),
                 'listing_status': agent.get('listing_status'),
+
+                # Repository info (needed for install/view source)
+                'image_repository_url': agent.get('image_repository_url'),
+                'image_repository_access': agent.get('image_repository_access', 'private'),
+                'source_repository_url': agent.get('source_repository_url'),
+                'source_repository_access': agent.get('source_repository_access', 'private'),
+
+                # Developer info (for rich cards without extra requests)
+                'developer_id': developer_data.get('_id', developer_name),
+                'developer_name': developer_data.get('name', developer_name),
+                'developer_avatar_url': developer_data.get('avatar_url'),
+
+                # Requirements (shown on cards/modals)
+                'model_requirements': agent.get('model_requirements'),
+                'required_egress': agent.get('required_egress'),
+
+                # Timestamp
+                'created_at': agent.get('created_at', datetime.now(UTC).isoformat().replace('+00:00', 'Z')),
+
+                # IDs
                 '_id': agent['_id'],
                 '_index_name': agent['_index_name'],
-            }
-            for agent in self.agents
-            if agent.get('listing_status') == 'published'
-        ]
+            })
 
         agents_index = {
             'agents': agents_list,
