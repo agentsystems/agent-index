@@ -144,7 +144,7 @@ When changes are merged to main:
 
 ### Overview
 
-This repository implements a **fully automated, federated agent registry** using GitHub's native features. The system is designed to accept contributions from external developers with zero manual approval while maintaining security for core infrastructure files.
+This repository implements a **fully automated, federated agent registry** using GitHub's native features. The system is designed to accept contributions from external developers with zero manual approval while applying different policies to core infrastructure files.
 
 This serves as the **reference implementation** and default index for AgentSystems. Anyone can fork this repository to run their own independent index, enabling a federated discovery model where multiple indexes can coexist.
 
@@ -277,7 +277,7 @@ Instead of a manual "claim namespace" process, ownership is checked through **Gi
 
 #### Defense in Depth
 
-Multiple layers protect against malicious contributions:
+Multiple validation layers are configured:
 
 1. **Policy Gate**: Validates folder ownership + scope
 2. **CODEOWNERS**: Requires maintainer approval for core files
@@ -346,27 +346,38 @@ Auto-merge uses `pull_request_target` instead of `pull_request` or `workflow_run
 
 If you need to rebuild this system from scratch:
 
-1. **Create repository** with standard structure
+1. **Create repository**:
+   - Standard structure with `developers/` folder containing only `.gitkeep`
+   - Do not include any example developer folders (keeps git history clean)
+
 2. **Update CODEOWNERS**: Add your maintainer GitHub usernames (workflows read from this file)
-3. **Add workflows**: Copy `.github/workflows/*.yml` files
+
+3. **Push initial code**:
+   - Add all files (workflows, schemas, scripts, examples, docs)
+   - Do not include any folders under `developers/` except `.gitkeep`
+
 4. **Create GitHub App**:
    - Settings → Developer settings → GitHub Apps → New
    - Permissions: Pull requests (RW), Contents (RW), Metadata (R)
-   - Subscribe to events: Pull request, Push
-   - Install on repository
+   - After creation, click "Install App" and select your repository
+   - Note: Must explicitly grant repository access after app creation
+
 5. **Add secrets**: `APP_ID` and `APP_PRIVATE_KEY`
+
 6. **Configure branch protection**:
    - Create ruleset targeting main branch
    - Set `required_approving_review_count: 0`
    - Add required checks (exact job names from workflows)
    - Enable `require_code_owner_review: true`
-6. **Enable GitHub Pages**:
-   - Settings → Pages → Source: GitHub Actions
-7. **Enable auto-merge**:
-   - Settings → General → Pull Requests → ☑️ Allow auto-merge
-8. **Bootstrap workflows**:
-   - Use admin bypass to merge initial workflow files
-   - After Policy Gate is active, system is self-sustaining
+   - Tip: Rulesets can be exported as JSON and imported to other repositories
+
+7. **Enable GitHub Pages**: Settings → Pages → Source: GitHub Actions
+
+8. **Enable auto-merge**: Settings → General → Pull Requests → ☑️ Allow auto-merge
+
+9. **Bootstrap workflows**:
+   - First commit to main requires admin bypass (workflows don't exist yet to run as checks)
+   - After workflows are on main, system operates autonomously
 
 ---
 
@@ -513,5 +524,3 @@ Apache-2.0 License - see [LICENSE](LICENSE) for details.
 ---
 
 https://agentsystems.ai
-
-v1
