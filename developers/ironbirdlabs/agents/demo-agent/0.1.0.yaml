@@ -1,0 +1,112 @@
+# AgentSystems Agent Metadata
+#
+# This file contains version-specific attributes for your agent.
+# These can change between releases as you upgrade models, add features, etc.
+#
+# When you publish to the agent-index, this file becomes {version}.yaml
+# (e.g., 0.1.0.yaml, 0.2.0.yaml) to maintain version history.
+
+# ============================================================================
+# VERSION METADATA
+# ============================================================================
+
+version: "0.1.0"  # Semantic version: x.y.z or x.y.z-beta.1 (used as container image tag)
+
+# ============================================================================
+# MATURITY & ACCESS
+# ============================================================================
+
+readiness_level: beta         # experimental | beta | production | deprecated
+
+container_image_access: private   # public | private
+source_repository_access: private # public | private
+
+# ============================================================================
+# DEPENDENCIES
+# ============================================================================
+
+model_dependencies:
+  - gemma3:1b
+  # Examples:
+  # - gpt-4
+  # - claude-3-opus
+
+required_egress: []
+  # Example:
+  # - https://api.openai.com
+
+required_integrations: []
+  # Example:
+  # - integration_id: slack-oauth
+  #   required: true
+  #   scopes: [chat:write, channels:read]
+
+# ============================================================================
+# I/O SPECIFICATION
+# ============================================================================
+
+input_types:
+  - type: text
+    mime_types: [text/plain]
+  # Examples:
+  # - type: pdf
+  #   mime_types: [application/pdf]
+
+output_types:
+  - type: text
+    mime_types: [text/plain]
+  # Examples:
+  # - type: json
+
+input_schema:
+  date:
+    type: date
+    required: true
+    label: "Date"
+    description: "The date to look up historical events"
+  # Examples:
+  #
+  # email:
+  #   type: string
+  #   required: true
+  #   label: "Email Address"
+  #   description: "User's email address"
+  #
+  # preferences:
+  #   type: string
+  #   required: false
+  #   label: "Preferences"
+  #   description: "Optional preferences"
+
+# ============================================================================
+# BEHAVIORAL CHARACTERISTICS
+# ============================================================================
+
+facets:
+  context: professional      # personal | professional | general
+  autonomy: Co-pilot        # Assist | Co-pilot | Auto-pilot
+  latency: near-real-time   # real-time | interactive | near-real-time | batch
+  cost_profile: free        # free | $/task | $/month | $/hour
+  modalities: [text]        # text | image | audio | video
+  domains: [text]           # Domains this agent specializes in
+  model_tooling: [LLM]      # LLM | RAG | fine-tuned | embeddings
+  industries: []            # legal | healthcare | finance
+  integrations: []          # Google Drive | Gmail | Slack
+
+# ============================================================================
+# RELEASE NOTES (supports markdown)
+# ============================================================================
+
+release_notes: |
+  ## Initial Release
+
+  First public release of the agent.
+
+  ### Features
+  - Historical event lookup by date
+  - Creative story generation
+  - Simple date-based interface
+
+  ### Dependencies
+  - Gemma 3 1B model
+  - No external API dependencies

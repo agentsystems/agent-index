@@ -1,0 +1,33 @@
+# AgentSystems Agent Identity
+#
+# This file defines your agent's identity - core characteristics like
+# name, description, and container image location.
+#
+# Version-specific attributes (model, schema, etc.) go in metadata.yaml.
+#
+# Replace the placeholder values below with your own.
+
+# ============================================================================
+# AGENT IDENTITY
+# ============================================================================
+
+developer: ironbirdlabs          # Your GitHub username or organization (must match folder name)
+name: demo-agent            # Agent name (lowercase, alphanumeric, hyphens only)
+description: "Demo agent that returns historical events for a date and creates a story"
+
+# Container image reference (without tag - version tag will be auto-derived)
+container_image: "docker.io/ironbirdlabs/demo-agent"  # e.g., docker.io/your-org/demo-agent
+
+# Source repository URL (optional)
+source_repository_url: "https://github.com/ironbirdlabs/demo-agent"  # e.g., https://github.com/your-org/demo-agent
+
+# High-level discovery metadata
+primary_function: research  # research | create | process | monitor | automate | analyze
+
+tags:
+  - demo
+  - history
+
+capabilities:
+  - Look up historical events by date
+  - Generate creative stories from facts
