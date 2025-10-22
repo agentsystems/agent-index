@@ -1,0 +1,49 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Agent Identity",
+  "description": "Agent identity metadata (agent.yaml) - fields that define what the agent is and never change between versions",
+  "type": "object",
+  "required": ["name", "developer", "description", "container_image"],
+  "properties": {
+    "name": {
+      "type": "string",
+      "description": "Agent name (lowercase, alphanumeric, hyphens only)",
+      "pattern": "^[a-z0-9]([a-z0-9-]*[a-z0-9])?$"
+    },
+    "developer": {
+      "type": "string",
+      "description": "Developer GitHub username (must match folder name)"
+    },
+    "description": {
+      "type": "string",
+      "description": "Short description of what the agent does"
+    },
+    "container_image": {
+      "type": "string",
+      "description": "Container image reference without tag (e.g., docker.io/user/agent or harbor.example.com/project/agent)"
+    },
+    "source_repository_url": {
+      "type": ["string", "null"],
+      "description": "Source code repository URL",
+      "format": "uri"
+    },
+    "primary_function": {
+      "type": ["string", "null"],
+      "description": "Primary function category (e.g., research, create, process, monitor, automate, analyze)"
+    },
+    "tags": {
+      "type": ["array", "null"],
+      "description": "Searchable tags for discovery",
+      "items": {
+        "type": "string"
+      }
+    },
+    "capabilities": {
+      "type": ["array", "null"],
+      "description": "High-level capability descriptions",
+      "items": {
+        "type": "string"
+      }
+    }
+  }
+}

@@ -1,0 +1,25 @@
+# Agent Identity for Demo Agent
+# See schema/agent-identity.schema.json for all available fields
+
+# ============================================================================
+# AGENT IDENTITY
+# ============================================================================
+
+developer: ironbirdlabs
+name: demo-agent
+description: Demo agent that returns historical events for a date and creates a story
+
+# Repository URLs
+container_image: docker.io/ironbirdlabs/demo-agent
+source_repository_url: https://github.com/ironbirdlabs/demo-agent
+
+# High-level discovery metadata
+primary_function: research
+tags:
+  - demo
+  - history
+  - storytelling
+  - educational
+capabilities:
+  - Look up historical events by date
+  - Generate creative stories from historical facts

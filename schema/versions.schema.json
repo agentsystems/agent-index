@@ -1,0 +1,24 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Agent Version Management",
+  "description": "Version management metadata (versions.yaml) - controls which versions are latest and visible",
+  "type": "object",
+  "required": ["latest_version", "listed_versions"],
+  "properties": {
+    "latest_version": {
+      "type": "string",
+      "description": "Latest/default version (must match an existing {version}.yaml file)",
+      "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+(-[a-z0-9.]+)?$"
+    },
+    "listed_versions": {
+      "type": "array",
+      "description": "Versions visible in discovery (each must match an existing {version}.yaml file)",
+      "items": {
+        "type": "string",
+        "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+(-[a-z0-9.]+)?$"
+      },
+      "minItems": 1,
+      "uniqueItems": true
+    }
+  }
+}

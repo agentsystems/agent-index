@@ -1,0 +1,225 @@
+name: Policy Gate
+
+on:
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+  pull-requests: read
+
+jobs:
+  gate:
+    name: Enforce core vs developers policy
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Get changed files
+        id: files
+        run: |
+          CHANGED=$(gh pr view "$PR" --json files -q '.files[].path' | tr '\n' ' ')
+          echo "changed=$CHANGED" >> "$GITHUB_OUTPUT"
+          echo "Changed files: $CHANGED"
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PR: ${{ github.event.pull_request.number }}
+
+      - name: Classify scope
+        id: scope
+        run: |
+          OUTSIDE=false
+          INSIDE_DEVELOPERS=false
+          for f in ${{ steps.files.outputs.changed }}; do
+            if [[ "$f" =~ ^developers/ ]]; then
+              INSIDE_DEVELOPERS=true
+            fi
+            if [[ ! "$f" =~ ^developers/ ]]; then
+              OUTSIDE=true
+              echo "Non-developer file detected: $f"
+            fi
+          done
+          echo "outside=$OUTSIDE" >> "$GITHUB_OUTPUT"
+          echo "inside_developers=$INSIDE_DEVELOPERS" >> "$GITHUB_OUTPUT"
+
+          if [ "$OUTSIDE" = "false" ]; then
+            echo "✅ PR only modifies developers/ folder"
+          else
+            echo "⚠️ PR modifies core files - additional checks required"
+          fi
+
+      # Warn if maintainer is modifying developers/ folder (neutrality check)
+      - name: Check for maintainer modifications to developers folder
+        if: steps.scope.outputs.inside_developers == 'true'
+        run: |
+          # Extract maintainers from CODEOWNERS
+          MAINTAINERS=($(grep -oP '@\K[a-zA-Z0-9_-]+' CODEOWNERS | sort -u))
+
+          echo "Maintainers from CODEOWNERS: ${MAINTAINERS[*]}"
+
+          PR_AUTHOR="${{ github.event.pull_request.user.login }}"
+          echo "PR author: $PR_AUTHOR"
+
+          for maintainer in "${MAINTAINERS[@]}"; do
+            if [[ "$PR_AUTHOR" == "$maintainer" ]]; then
+              echo ""
+              echo "⚠️  WARNING: Maintainer modifying developers/ folder"
+              echo "⚠️  PR Author: $PR_AUTHOR"
+              echo ""
+              break
+            fi
+          done
+
+      # Extract developer folder and verify ownership
+      - name: Extract developer folder and PR head owner
+        if: steps.scope.outputs.outside == 'false'
+        id: who
+        run: |
+          # Get unique developer folders touched by this PR
+          DEV_FOLDERS=$(echo "${{ steps.files.outputs.changed }}" | tr ' ' '\n' | grep -E '^developers/' | cut -d'/' -f2 | sort -u)
+          COUNT=$(echo "$DEV_FOLDERS" | wc -l | tr -d ' ')
+
+          echo "dev_folders=$DEV_FOLDERS" >> "$GITHUB_OUTPUT"
+          echo "dev_folder_count=$COUNT" >> "$GITHUB_OUTPUT"
+
+          echo "Developer folders touched: $DEV_FOLDERS"
+          echo "Count: $COUNT"
+
+      # Fast-path: developers/** only -> pass (with ownership checks)
+      - name: Pass for developers-only PRs
+        if: steps.scope.outputs.outside == 'false'
+        run: |
+          # Check 1: Must touch exactly one developer folder
+          if [ "${{ steps.who.outputs.dev_folder_count }}" != "1" ]; then
+            echo "❌ PR must touch exactly one developers/<owner>/ subtree."
+            echo "Folders touched: ${{ steps.who.outputs.dev_folders }}"
+            exit 1
+          fi
+
+          # Check 2: Developer folder must match PR head repository owner
+          FOLDER="${{ steps.who.outputs.dev_folders }}"
+          OWNER="${{ github.event.pull_request.head.repo.owner.login }}"
+
+          echo "Developer folder: $FOLDER"
+          echo "PR head repo owner: $OWNER"
+
+          if [ "$FOLDER" != "$OWNER" ]; then
+            echo "❌ Developer folder ($FOLDER) must match PR head repository owner ($OWNER)."
+            echo "PRs must come from a fork owned by the developer/organization."
+            exit 1
+          fi
+
+          echo "✅ Auto-merge eligible: changes limited to developers/$OWNER/ folder"
+          echo "No additional approval required for developer content"
+
+      # Core policy checks
+      - name: Load PR details
+        if: steps.scope.outputs.outside == 'true'
+        id: pr
+        run: |
+          gh pr view "$PR" --json headRefOid,author,commits,latestReviews \
+            -q '{head: .headRefOid, author: .author.login, reviews: [.latestReviews[]? | {author: .author.login, state: .state, commit: .commit.oid, submittedAt: .submittedAt}]}' > pr.json
+
+          echo "PR details:"
+          cat pr.json
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PR: ${{ github.event.pull_request.number }}
+
+      - name: Get last pusher (latest commit author)
+        if: steps.scope.outputs.outside == 'true'
+        id: last
+        run: |
+          LAST_SHA=$(jq -r '.head' pr.json)
+          LAST_AUTHOR=$(gh api repos/${{ github.repository }}/commits/$LAST_SHA --jq '.author.login // .commit.author.name')
+
+          echo "last_commit_sha=$LAST_SHA" >> "$GITHUB_OUTPUT"
+          echo "last_commit_author=$LAST_AUTHOR" >> "$GITHUB_OUTPUT"
+
+          echo "Latest commit: $LAST_SHA"
+          echo "Latest commit author: $LAST_AUTHOR"
+        env:
+          GH_TOKEN: ${{ github.token }}
+
+      - name: Verify approval by maintainer on latest commit
+        if: steps.scope.outputs.outside == 'true'
+        id: approve
+        run: |
+          LATEST=$(jq -r '.head' pr.json)
+          AUTHOR=$(jq -r '.author' pr.json)
+
+          # Extract allowed approvers from CODEOWNERS
+          APPROVERS=($(grep -oP '@\K[a-zA-Z0-9_-]+' CODEOWNERS | sort -u))
+
+          echo "Latest commit: $LATEST"
+          echo "PR author: $AUTHOR"
+          echo "Allowed approvers (from CODEOWNERS): ${APPROVERS[*]}"
+
+          APPROVED="false"
+          APPROVER=""
+          for a in "${APPROVERS[@]}"; do
+            HIT=$(jq --arg a "$a" --arg sha "$LATEST" -r \
+              '.reviews[]? | select(.author==$a and .state=="APPROVED" and .commit==$sha) | .author' pr.json)
+            if [[ -n "$HIT" ]]; then
+              APPROVED="true"
+              APPROVER="$HIT"
+              echo "Found approval from: $APPROVER"
+            fi
+          done
+
+          if [[ "$APPROVED" != "true" ]]; then
+            echo "❌ Core file changes require fresh approval by a maintainer on the latest commit."
+            echo "Allowed approvers: ${APPROVERS[*]}"
+            exit 1
+          fi
+
+          # Check: approver cannot be the PR author
+          if [[ "$APPROVER" == "$AUTHOR" ]]; then
+            echo "❌ Approval cannot come from the PR author ($AUTHOR)."
+            exit 1
+          fi
+
+          # Check: approver cannot be the last pusher (latest commit author)
+          LAST_PUSHER="${{ steps.last.outputs.last_commit_author }}"
+          if [[ "$APPROVER" == "$LAST_PUSHER" ]]; then
+            echo "❌ Approval cannot come from the last pusher ($LAST_PUSHER)."
+            echo "Someone else must approve after the latest push."
+            exit 1
+          fi
+
+          echo "✅ Fresh maintainer approval present from: $APPROVER"
+          echo "  PR author: $AUTHOR"
+          echo "  Last pusher: $LAST_PUSHER"
+          echo "  Approver: $APPROVER"
+
+      - name: Verify commit signatures for core changes
+        if: steps.scope.outputs.outside == 'true'
+        run: |
+          echo "Checking commit signatures for core file changes..."
+
+          # Check if any commit in the PR is unverified
+          UNVERIFIED=$(gh api repos/${{ github.repository }}/pulls/$PR/commits \
+            --jq '.[] | select(.commit.verification.verified!=true) | .sha')
+
+          if [ -n "$UNVERIFIED" ]; then
+            echo "❌ All commits must be verified for core file changes."
+            echo "Unverified commits:"
+            echo "$UNVERIFIED"
+            exit 1
+          fi
+
+          echo "✅ All commits verified."
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PR: ${{ github.event.pull_request.number }}
+
+      - name: Core policy passed
+        if: steps.scope.outputs.outside == 'true'
+        run: |
+          echo "✅ All core file protection checks passed:"
+          echo "  - Fresh maintainer approval on latest commit ✓"
+          echo "  - Approver ≠ PR author ✓"
+          echo "  - Approver ≠ last pusher ✓"
+          echo "  - All commits verified ✓"

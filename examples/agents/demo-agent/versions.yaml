@@ -1,0 +1,7 @@
+# Version Management for Demo Agent
+# See schema/versions.schema.json for all available fields
+
+latest_version: "0.1.0"
+
+listed_versions:
+  - "0.1.0"

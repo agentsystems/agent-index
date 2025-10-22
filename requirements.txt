@@ -1,0 +1,3 @@
+# Core dependencies for validation and build scripts
+pyyaml>=6.0
+jsonschema>=4.0

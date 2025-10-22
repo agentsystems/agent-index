@@ -1,0 +1,171 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Agent Version",
+  "description": "Complete agent version specification ({version}.yaml) - all behavioral characteristics for a specific version",
+  "type": "object",
+  "required": ["version", "model_dependencies"],
+  "properties": {
+    "version": {
+      "type": "string",
+      "description": "Semantic version (e.g., 0.1.0 or 0.1.0-beta.1). Must match filename (0.1.0.yaml).",
+      "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+(-[a-z0-9.]+)?$"
+    },
+    "readiness_level": {
+      "type": ["string", "null"],
+      "description": "Maturity level for this version",
+      "enum": ["experimental", "beta", "production", "deprecated", null]
+    },
+    "container_image_access": {
+      "type": ["string", "null"],
+      "description": "Container image access level for this version",
+      "enum": ["public", "private", null]
+    },
+    "source_repository_access": {
+      "type": ["string", "null"],
+      "description": "Source repository access level for this version",
+      "enum": ["public", "private", null]
+    },
+    "model_dependencies": {
+      "type": "array",
+      "description": "Required AI models for this version",
+      "items": {
+        "type": "string"
+      },
+      "minItems": 1
+    },
+    "required_egress": {
+      "type": ["array", "null"],
+      "description": "Required network egress URLs for this version",
+      "items": {
+        "type": "string",
+        "format": "uri"
+      }
+    },
+    "required_integrations": {
+      "type": ["array", "null"],
+      "description": "Required external integrations for this version",
+      "items": {
+        "type": "object"
+      }
+    },
+    "input_types": {
+      "type": ["array", "null"],
+      "description": "Supported input data types for this version",
+      "items": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string"
+          },
+          "mime_types": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        }
+      }
+    },
+    "output_types": {
+      "type": ["array", "null"],
+      "description": "Supported output data types for this version",
+      "items": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string"
+          },
+          "mime_types": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        }
+      }
+    },
+    "input_schema": {
+      "type": ["object", "null"],
+      "description": "Input parameter schema for this version",
+      "additionalProperties": {
+        "type": "object",
+        "properties": {
+          "required": {
+            "type": "boolean"
+          },
+          "label": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "type": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "facets": {
+      "type": ["object", "null"],
+      "description": "Behavioral characteristics and categorization metadata for this version",
+      "properties": {
+        "context": {
+          "type": ["string", "null"],
+          "description": "Context in which the agent operates (e.g., 'personal', 'professional', 'general')"
+        },
+        "autonomy": {
+          "type": ["string", "null"],
+          "description": "Level of autonomy (e.g., 'Assist', 'Co-pilot', 'Auto-pilot')"
+        },
+        "latency": {
+          "type": ["string", "null"],
+          "description": "Latency characteristics (e.g., 'real-time', 'interactive', 'batch')"
+        },
+        "cost_profile": {
+          "type": ["string", "null"],
+          "description": "Cost model (e.g., 'free', '$/task', '$/month')"
+        },
+        "modalities": {
+          "type": ["array", "null"],
+          "description": "Supported modalities (e.g., 'text', 'image', 'audio', 'video')",
+          "items": {
+            "type": "string"
+          }
+        },
+        "domains": {
+          "type": ["array", "null"],
+          "description": "Application domains",
+          "items": {
+            "type": "string"
+          }
+        },
+        "industries": {
+          "type": ["array", "null"],
+          "description": "Target industries",
+          "items": {
+            "type": "string"
+          }
+        },
+        "model_tooling": {
+          "type": ["array", "null"],
+          "description": "Model frameworks used (e.g., 'LLM', 'RAG', 'fine-tuned', 'embeddings')",
+          "items": {
+            "type": "string"
+          }
+        },
+        "integrations": {
+          "type": ["array", "null"],
+          "description": "Supported integrations",
+          "items": {
+            "type": "string"
+          }
+        }
+      },
+      "additionalProperties": true
+    },
+    "release_notes": {
+      "type": ["string", "null"],
+      "description": "Markdown-formatted release notes for this version"
+    }
+  }
+}

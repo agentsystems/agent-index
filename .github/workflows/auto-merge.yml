@@ -1,0 +1,240 @@
+name: Auto-Merge Developer PRs
+
+on:
+  pull_request_target:
+    types: [opened, synchronize, reopened]
+    paths:
+      - 'developers/**'
+
+permissions:
+  contents: read
+  pull-requests: write
+  issues: write  # Required for labeling
+
+jobs:
+  auto-merge:
+    name: Auto-Merge Developer Changes
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Generate GitHub App token
+        id: app-token
+        uses: tibdex/github-app-token@v2
+        with:
+          app_id: ${{ secrets.APP_ID }}
+          private_key: ${{ secrets.APP_PRIVATE_KEY }}
+
+      - name: Checkout repository (base branch for git context)
+        uses: actions/checkout@v4
+        with:
+          ref: main
+
+      - name: Ensure labels exist
+        run: |
+          # Create labels if they don't exist
+          gh label list --json name -q '.[].name' | grep -q "^agent-submission$" || \
+            gh label create "agent-submission" --description "PR modifying agent metadata in developers/ folder" --color "0E8A16"
+
+          gh label list --json name -q '.[].name' | grep -q "^auto-merge:eligible$" || \
+            gh label create "auto-merge:eligible" --description "PR passed all checks and will auto-merge" --color "0E8A16"
+
+          gh label list --json name -q '.[].name' | grep -q "^auto-merge:rejected$" || \
+            gh label create "auto-merge:rejected" --description "PR failed checks and requires manual review" --color "D93F0B"
+        env:
+          GH_TOKEN: ${{ github.token }}
+
+      - name: Get PR number
+        id: pr
+        run: |
+          PR_NUMBER="${{ github.event.pull_request.number }}"
+          echo "number=$PR_NUMBER" >> $GITHUB_OUTPUT
+          echo "📝 Processing PR #$PR_NUMBER"
+
+      - name: Get PR details
+        id: head
+        if: steps.pr.outputs.number != ''
+        run: |
+          # Get the repository owner where the PR branch is coming from
+          HEAD_OWNER=$(gh pr view ${{ steps.pr.outputs.number }} --json headRepositoryOwner -q .headRepositoryOwner.login)
+          echo "owner=$HEAD_OWNER" >> $GITHUB_OUTPUT
+          echo "📝 PR head repository owner: $HEAD_OWNER"
+        env:
+          GH_TOKEN: ${{ github.token }}
+
+      - name: Get changed files
+        id: files
+        if: steps.pr.outputs.number != ''
+        run: |
+          # Get list of changed files
+          CHANGED_FILES=$(gh pr view ${{ steps.pr.outputs.number }} --json files -q '.files[].path' | tr '\n' ' ' | xargs)
+          echo "changed=$CHANGED_FILES" >> $GITHUB_OUTPUT
+
+          # Check if any files are in developers/ folder (early exit if not)
+          HAS_DEVELOPER_FILES=false
+          for file in $CHANGED_FILES; do
+            if [[ "$file" =~ ^developers/ ]]; then
+              HAS_DEVELOPER_FILES=true
+              break
+            fi
+          done
+
+          # Exit early if no developer files (not eligible for auto-merge)
+          if [ "$HAS_DEVELOPER_FILES" = "false" ]; then
+            echo "ℹ️ No files in developers/ folder - skipping auto-merge workflow"
+            exit 0
+          fi
+
+          # Check if any files are outside developers/ folder
+          OUTSIDE_DEVELOPERS=false
+          for file in $CHANGED_FILES; do
+            if [[ ! "$file" =~ ^developers/ ]]; then
+              OUTSIDE_DEVELOPERS=true
+              break
+            fi
+          done
+          echo "outside_developers=$OUTSIDE_DEVELOPERS" >> $GITHUB_OUTPUT
+
+          # Get the developer folder name if all files are in one folder
+          DEVELOPER_FOLDER=$(echo "$CHANGED_FILES" | tr ' ' '\n' | grep '^developers/' | cut -d'/' -f2 | sort -u)
+          FOLDER_COUNT=$(echo "$DEVELOPER_FOLDER" | wc -l | tr -d ' ')
+
+          if [ "$FOLDER_COUNT" -eq "1" ] && [ -n "$DEVELOPER_FOLDER" ]; then
+            echo "folder=$DEVELOPER_FOLDER" >> $GITHUB_OUTPUT
+            echo "single_folder=true" >> $GITHUB_OUTPUT
+          else
+            echo "single_folder=false" >> $GITHUB_OUTPUT
+          fi
+        env:
+          GH_TOKEN: ${{ github.token }}
+
+      - name: Label PR as agent submission
+        if: steps.pr.outputs.number != ''
+        run: |
+          gh pr edit ${{ steps.pr.outputs.number }} --add-label "agent-submission"
+        env:
+          GH_TOKEN: ${{ github.token }}
+
+      - name: Check commit verification
+        id: verify
+        if: steps.pr.outputs.number != ''
+        run: |
+          # Get all commits in the PR
+          COMMITS=$(gh pr view ${{ steps.pr.outputs.number }} --json commits -q '.commits[].oid')
+
+          ALL_VERIFIED=true
+          UNVERIFIED_COMMITS=""
+
+          # Check each commit for verification
+          for commit_sha in $COMMITS; do
+            VERIFIED=$(gh api "/repos/${{ github.repository }}/commits/$commit_sha" --jq '.commit.verification.verified')
+
+            if [ "$VERIFIED" != "true" ]; then
+              ALL_VERIFIED=false
+              UNVERIFIED_COMMITS="$UNVERIFIED_COMMITS $commit_sha"
+              echo "⚠️ Unverified commit found: $commit_sha"
+            else
+              echo "✅ Verified commit: $commit_sha"
+            fi
+          done
+
+          echo "all_verified=$ALL_VERIFIED" >> $GITHUB_OUTPUT
+          echo "unverified_commits=$UNVERIFIED_COMMITS" >> $GITHUB_OUTPUT
+        env:
+          GH_TOKEN: ${{ github.token }}
+
+      - name: Close PR with unverified commits
+        if: steps.verify.outputs.all_verified != 'true' && steps.pr.outputs.number != ''
+        run: |
+          # Add rejection label
+          gh pr edit ${{ steps.pr.outputs.number }} --add-label "auto-merge:rejected"
+
+          # Comment with explanation
+          gh pr comment ${{ steps.pr.outputs.number }} --body "$(cat <<'EOF'
+          🚫 **PR Closed: Unverified Commits**
+
+          This PR contains commits that are not signed with a verified GPG or SSH key. For security reasons, all agent submissions must have cryptographically signed commits.
+
+          **Unverified commits:**${{ steps.verify.outputs.unverified_commits }}
+
+          **How to fix:**
+          1. Set up commit signing: https://docs.github.com/en/authentication/managing-commit-signature-verification
+          2. Configure auto-signing:
+             ```bash
+             git config commit.gpgsign true   # For GPG
+             # or
+             git config gpg.format ssh        # For SSH keys
+             git config user.signingkey ~/.ssh/id_ed25519.pub
+             ```
+          3. Create a new PR with signed commits
+
+          **Please do not reopen this PR.** Create a new PR after setting up commit signing.
+
+          See the [documentation](https://docs.agentsystems.ai/deploy-agents/list-on-index#unverified-commits) for detailed instructions.
+          EOF
+          )"
+
+          # Close the PR
+          gh pr close ${{ steps.pr.outputs.number }}
+
+          echo "❌ PR closed due to unverified commits"
+          exit 0
+        env:
+          GH_TOKEN: ${{ github.token }}
+
+      - name: Check auto-merge eligibility
+        id: check
+        if: steps.pr.outputs.number != '' && steps.verify.outputs.all_verified == 'true'
+        run: |
+          # Check conditions for auto-merge (commits already verified)
+          ELIGIBLE=true
+          REASON=""
+
+          # Condition 1: Changes must be only in developers/ folder
+          if [ "${{ steps.files.outputs.outside_developers }}" == "true" ]; then
+            ELIGIBLE=false
+            REASON="PR modifies files outside of developers/ folder"
+          fi
+
+          # Condition 2: Changes must be in a single developer folder
+          if [ "${{ steps.files.outputs.single_folder }}" != "true" ]; then
+            ELIGIBLE=false
+            REASON="PR modifies multiple developer folders or no developer folder"
+          fi
+
+          # Condition 3: Developer folder must match PR head repository owner
+          if [ "${{ steps.files.outputs.folder }}" != "${{ steps.head.outputs.owner }}" ]; then
+            ELIGIBLE=false
+            REASON="Developer folder (${{ steps.files.outputs.folder }}) does not match PR head repository owner (${{ steps.head.outputs.owner }}). PRs must come from a fork owned by the developer/organization."
+          fi
+
+          echo "eligible=$ELIGIBLE" >> $GITHUB_OUTPUT
+          echo "reason=$REASON" >> $GITHUB_OUTPUT
+
+      - name: Label as eligible and auto-approve
+        if: steps.check.outputs.eligible == 'true' && steps.pr.outputs.number != ''
+        run: |
+          # Add eligible label
+          gh pr edit ${{ steps.pr.outputs.number }} --add-label "auto-merge:eligible"
+
+          # Approve PR
+          gh pr review ${{ steps.pr.outputs.number }} --approve --body "✅ Automated approval: YAML syntax and schema validation passed. Changes are limited to your developer folder. Commits passed verification checks. Note: Validation checks format and structure only, not agent functionality or security."
+        env:
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
+
+      - name: Auto-merge PR
+        if: steps.check.outputs.eligible == 'true' && steps.pr.outputs.number != ''
+        run: |
+          gh pr merge ${{ steps.pr.outputs.number }} --squash --auto
+        env:
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
+
+      - name: Label and comment if not eligible
+        if: steps.check.outputs.eligible != 'true' && steps.pr.outputs.number != '' && steps.verify.outputs.all_verified == 'true'
+        run: |
+          # Add rejection label
+          gh pr edit ${{ steps.pr.outputs.number }} --add-label "auto-merge:rejected"
+
+          # Comment with reason
+          gh pr comment ${{ steps.pr.outputs.number }} --body "⚠️ Auto-merge not eligible: ${{ steps.check.outputs.reason }} - This PR requires manual review by a maintainer."
+        env:
+          GH_TOKEN: ${{ github.token }}

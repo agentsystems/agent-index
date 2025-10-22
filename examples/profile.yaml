@@ -1,0 +1,45 @@
+# Developer Profile for Ironbird Labs
+# See schema/developer.schema.json for all available fields
+
+# ============================================================================
+# CORE IDENTITY (Required)
+# ============================================================================
+
+name: Ironbird Labs, LLC
+developer: ironbirdlabs
+type: company
+
+# ============================================================================
+# PROFILE INFORMATION
+# ============================================================================
+
+bio: Developer of AI agents and automation tools focused on enterprise workflows and data processing
+tagline: Building intelligent automation
+company: Ironbird Labs, LLC
+location: Honolulu, HI
+years_experience: 15
+
+# ============================================================================
+# CONTACT & LINKS
+# ============================================================================
+
+website: https://ironbirdlabs.com
+support_email: support@ironbirdlabs.com
+linkedin_url: https://www.linkedin.com/company/ironbirdlabs
+
+# ============================================================================
+# EXPERTISE
+# ============================================================================
+
+expertise:
+  - Multi-Agent Systems
+  - Natural Language Processing
+  - Data Pipeline Automation
+  - Enterprise Integration
+  - Workflow Orchestration
+
+# ============================================================================
+# COLLABORATION
+# ============================================================================
+
+open_to_collaboration: true

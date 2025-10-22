@@ -1,0 +1,46 @@
+# Version Specification for Demo Agent v0.1.0
+# See schema/agent-version.schema.json for all available fields
+
+version: "0.1.0"
+
+readiness_level: beta
+
+container_image_access: public
+source_repository_access: public
+
+model_dependencies:
+  - gemma3:1b
+
+input_types:
+  - type: text
+    mime_types: [text/plain]
+
+output_types:
+  - type: text
+    mime_types: [text/plain]
+
+input_schema:
+  date:
+    type: string
+    required: true
+    label: Date
+    description: The date to look up historical events
+
+facets:
+  context: general
+  autonomy: Co-pilot
+  latency: interactive
+  cost_profile: free
+  modalities: [text]
+  domains: [text]
+  model_tooling: [LLM]
+
+release_notes: |
+  ## Initial Release
+
+  First public release of the demo agent.
+
+  ### Features
+  - Historical event lookup by date
+  - Creative story generation from facts
+  - Simple date-based query interface

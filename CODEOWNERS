@@ -1,0 +1,15 @@
+# CODEOWNERS for agent-index
+#
+# This file designates ownership for core infrastructure files only.
+# Developer folders (developers/*/) use auto-merge validation based on fork ownership.
+#
+# Learn more: https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/about-code-owners
+
+# Core infrastructure requires maintainer approval
+/schema/ @brandon-agsys
+/.github/ @brandon-agsys
+/scripts/ @brandon-agsys
+/README.md @brandon-agsys
+/CONTRIBUTING.md @brandon-agsys
+/LICENSE @brandon-agsys
+/CODEOWNERS @brandon-agsys
