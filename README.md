@@ -1,4 +1,4 @@
-# Agent Index
+# agent-index
 
 An open-source, Git-based index for AI agents enabling federated discovery. Developers manage their own agent metadata through pull requests, and the index is automatically built and published via GitHub Pages.
 
