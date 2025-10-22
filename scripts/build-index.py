@@ -389,6 +389,9 @@ class IndexBuilder:
                 # IDs
                 '_id': agent['_id'],
                 '_index_name': agent['_index_name'],
+
+                # Version info
+                '_available_versions': agent.get('_available_versions', []),
             })
 
         agents_index = {
