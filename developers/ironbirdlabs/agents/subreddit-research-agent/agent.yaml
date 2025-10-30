@@ -1,0 +1,41 @@
+# AgentSystems Agent Identity
+#
+# This file defines your agent's identity - core characteristics like
+# name, description, and container image location.
+#
+# Version-specific attributes (model, schema, etc.) go in metadata.yaml.
+#
+# Replace the placeholder values below with your own.
+
+# ============================================================================
+# AGENT IDENTITY
+# ============================================================================
+
+developer: ironbirdlabs          # Your GitHub username or organization (must match folder name)
+name: subreddit-research-agent   # Agent name (lowercase, alphanumeric, hyphens only)
+description: "AI agent that analyzes Reddit communities to answer specific research questions with comprehensive market intelligence reports"
+
+# Container image reference (without tag - version tag will be auto-derived)
+container_image: "docker.io/ironbirdlabs/subreddit-research-agent"
+
+# Source repository URL (optional)
+source_repository_url: "https://github.com/ironbirdlabs/subreddit-research-agent"
+
+# High-level discovery metadata
+primary_function: research  # research | create | process | monitor | automate | analyze
+
+tags:
+  - reddit
+  - market-research
+  - community-analysis
+  - sentiment-analysis
+  - competitive-intelligence
+
+capabilities:
+  - Analyze subreddit discussions to answer research questions
+  - Generate targeted search keywords using LLM
+  - Filter and score threads for relevance
+  - Perform deep analysis of comments and threads
+  - Synthesize findings with evidence strength ratings
+  - Generate strategic recommendations
+  - Produce professional PDF/JSON/Markdown reports
