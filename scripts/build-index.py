@@ -419,7 +419,7 @@ class IndexBuilder:
                 'developer_avatar_url': developer_data.get('avatar_url'),
 
                 # Requirements (shown on cards/modals)
-                'model_requirements': agent.get('model_requirements'),
+                'model_dependencies': agent.get('model_dependencies'),
                 'required_egress': agent.get('required_egress'),
 
                 # Timestamp
