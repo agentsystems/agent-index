@@ -18,18 +18,18 @@ version: "0.1.0"  # Semantic version: x.y.z or x.y.z-beta.1 (used as container i
 
 readiness_level: beta         # experimental | beta | production | deprecated
 
-container_image_access: private   # public | private
-source_repository_access: private # public | private
+container_image_access: public   # public | private
+source_repository_access: public # public | private
 
 # ============================================================================
 # DEPENDENCIES
 # ============================================================================
 
 model_dependencies:
-  - claude-sonnet-4-5
+  - gemma3:4b
 
 required_egress:
-  - https://api.anthropic.com  # Claude API for LLM calls
+  - https://www.reddit.com  # Reddit for authentication
   - https://oauth.reddit.com   # Reddit API for fetching posts/comments
 
 required_integrations: []
@@ -108,7 +108,7 @@ release_notes: |
   - User research and pain point discovery
 
   ### Dependencies
-  - Claude Sonnet 4.5 model
+  - Gemma3:4b model
   - Reddit API (free developer credentials required)
 
   ### Recommended Settings
