@@ -240,6 +240,7 @@ class IndexBuilder:
         merged_data['_index_name'] = f"@{developer_name}/{agent_name}"
 
         # Add available versions list (only listed ones from versions.yaml)
+        # Include version-specific requirements so UI can show accurate requirements per version
         available_versions = []
         for version_string in listed_versions:
             # Find the version data
@@ -249,6 +250,9 @@ class IndexBuilder:
                     'version': version_string,
                     'is_latest': version_string == latest_version_string,
                     'readiness_level': version_data.get('readiness_level'),
+                    # Include requirements that vary by version
+                    'model_dependencies': version_data.get('model_dependencies'),
+                    'required_egress': version_data.get('required_egress'),
                 })
         merged_data['_available_versions'] = available_versions
 
