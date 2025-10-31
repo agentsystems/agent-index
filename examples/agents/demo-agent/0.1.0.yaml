@@ -11,6 +11,21 @@ source_repository_access: public
 model_dependencies:
   - gemma3:1b
 
+required_credentials: []
+  # Example (if your agent connects to an external service):
+  # - name: EXTERNAL_SERVICE_CLIENT_ID
+  #   description: Client ID from your external service provider
+  # - name: EXTERNAL_SERVICE_CLIENT_SECRET
+  #   description: Client secret from your external service provider
+
+setup_instructions: |
+  No special setup required for this agent.
+  # Example (if your agent requires external service credentials):
+  # 1. Go to your external service's developer portal
+  # 2. Create an application to generate API credentials
+  # 3. Copy the Client ID and Secret
+  # 4. Configure these as environment variables in your deployment
+
 input_types:
   - type: text
     mime_types: [text/plain]
