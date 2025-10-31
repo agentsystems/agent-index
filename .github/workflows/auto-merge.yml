@@ -15,6 +15,7 @@ jobs:
   auto-merge:
     name: Auto-Merge Developer Changes
     runs-on: ubuntu-latest
+    timeout-minutes: 10
 
     steps:
       - name: Generate GitHub App token

@@ -37,6 +37,10 @@ from typing import Any, Dict, List
 
 import yaml
 
+# YAML size and complexity limits to help mitigate resource exhaustion attacks
+MAX_YAML_SIZE = 100 * 1024  # 100 KB per file
+MAX_YAML_COMPLEXITY = 1000  # Max nodes in YAML tree
+
 
 class IndexBuilder:
     """Builds the agent index from YAML source files."""
@@ -56,10 +60,45 @@ class IndexBuilder:
             shutil.rmtree(self.dist_path)
         self.dist_path.mkdir(parents=True)
 
+    def count_nodes(self, obj) -> int:
+        """
+        Recursively count nodes in a data structure.
+
+        Returns:
+            Total number of nodes (dict keys, list items, scalars)
+        """
+        if isinstance(obj, dict):
+            return sum(self.count_nodes(v) for v in obj.values()) + len(obj)
+        elif isinstance(obj, list):
+            return sum(self.count_nodes(item) for item in obj) + len(obj)
+        else:
+            return 1
+
     def load_yaml(self, yaml_path: Path) -> Dict[str, Any]:
-        """Load a YAML file and return parsed data."""
+        """
+        Load a YAML file with size and complexity validation.
+
+        Raises:
+            ValueError: If file exceeds size or complexity limits
+        """
+        # Check file size before loading
+        file_size = yaml_path.stat().st_size
+        if file_size > MAX_YAML_SIZE:
+            raise ValueError(
+                f"YAML file too large: {file_size} bytes (max {MAX_YAML_SIZE})"
+            )
+
         with open(yaml_path, 'r') as f:
-            return yaml.safe_load(f)
+            data = yaml.safe_load(f)
+
+        # Check complexity after parsing to detect exponential expansion
+        node_count = self.count_nodes(data)
+        if node_count > MAX_YAML_COMPLEXITY:
+            raise ValueError(
+                f"YAML too complex: {node_count} nodes (max {MAX_YAML_COMPLEXITY})"
+            )
+
+        return data
 
     def save_json(self, data: Any, output_path: Path):
         """Save data as formatted JSON."""

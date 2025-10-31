@@ -24,12 +24,20 @@ Usage:
 """
 
 import json
+import re
 import sys
 from pathlib import Path
 from typing import List, Tuple
 
 import yaml
 from jsonschema import Draft7Validator, ValidationError
+
+# GitHub username validation to help mitigate path traversal and hidden folder attacks
+VALID_DEVELOPER_NAME = re.compile(r'^[a-zA-Z0-9]([a-zA-Z0-9-]*[a-zA-Z0-9])?$')
+
+# YAML size and complexity limits to help mitigate resource exhaustion attacks
+MAX_YAML_SIZE = 100 * 1024  # 100 KB per file
+MAX_YAML_COMPLEXITY = 1000  # Max nodes in YAML tree
 
 
 def load_schema(schema_path: Path) -> dict:
@@ -38,10 +46,46 @@ def load_schema(schema_path: Path) -> dict:
         return json.load(f)
 
 
+def count_nodes(obj, count=0) -> int:
+    """
+    Recursively count nodes in a data structure.
+
+    Returns:
+        Total number of nodes (dict keys, list items, scalars)
+    """
+    if isinstance(obj, dict):
+        return sum(count_nodes(v) for v in obj.values()) + len(obj)
+    elif isinstance(obj, list):
+        return sum(count_nodes(item) for item in obj) + len(obj)
+    else:
+        return 1
+
+
 def load_yaml(yaml_path: Path) -> dict:
-    """Load a YAML file."""
+    """
+    Load a YAML file with size and complexity validation.
+
+    Raises:
+        ValueError: If file exceeds size or complexity limits
+    """
+    # Check file size before loading
+    file_size = yaml_path.stat().st_size
+    if file_size > MAX_YAML_SIZE:
+        raise ValueError(
+            f"YAML file too large: {file_size} bytes (max {MAX_YAML_SIZE})"
+        )
+
     with open(yaml_path, 'r') as f:
-        return yaml.safe_load(f)
+        data = yaml.safe_load(f)
+
+    # Check complexity after parsing to detect exponential expansion
+    node_count = count_nodes(data)
+    if node_count > MAX_YAML_COMPLEXITY:
+        raise ValueError(
+            f"YAML too complex: {node_count} nodes (max {MAX_YAML_COMPLEXITY})"
+        )
+
+    return data
 
 
 def validate_file(yaml_path: Path, schema: dict, validator: Draft7Validator) -> List[str]:
@@ -112,6 +156,15 @@ def validate_developers(base_path: Path, developer_folder: str = None) -> Tuple[
 
     for profile_file in sorted(profile_files):
         developer_name = profile_file.parent.name
+
+        # Validate folder name format (GitHub username rules)
+        if not VALID_DEVELOPER_NAME.match(developer_name):
+            print(f"\n❌ {profile_file.relative_to(base_path)}")
+            print(f"  - Invalid folder name format: '{developer_name}'")
+            print(f"  - Must match GitHub username rules: ^[a-zA-Z0-9]([a-zA-Z0-9-]*[a-zA-Z0-9])?$")
+            print(f"  - Start/end with alphanumeric, middle can contain hyphens")
+            error_count += 1
+            continue
 
         # Validate that folder name matches developer field
         data = load_yaml(profile_file)
