@@ -48,6 +48,28 @@
         "type": "object"
       }
     },
+    "required_credentials": {
+      "type": ["array", "null"],
+      "description": "Required credentials/environment variables for this version",
+      "items": {
+        "type": "object",
+        "required": ["name", "description"],
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Name of the credential/environment variable"
+          },
+          "description": {
+            "type": "string",
+            "description": "Human-readable description of what this credential is"
+          }
+        }
+      }
+    },
+    "setup_instructions": {
+      "type": ["string", "null"],
+      "description": "Markdown-formatted setup instructions for configuring and running this agent"
+    },
     "input_types": {
       "type": ["array", "null"],
       "description": "Supported input data types for this version",
