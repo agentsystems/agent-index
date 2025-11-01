@@ -115,6 +115,41 @@ jobs:
           echo "✅ Auto-merge eligible: changes limited to developers/$OWNER/ folder"
           echo "No additional approval required for developer content"
 
+      - name: Auto-close PR on developer ownership violation
+        if: failure() && steps.scope.outputs.outside == 'false'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const pr_number = context.payload.pull_request.number;
+
+            // Add comment explaining why
+            await github.rest.issues.createComment({
+              ...context.repo,
+              issue_number: pr_number,
+              body: '**Developer Ownership Violation**\n\n' +
+                'This PR has been automatically closed because it violates developer folder ownership rules.\n\n' +
+                '**Rules:**\n' +
+                '- PRs must come from a fork owned by you (not someone else\'s fork)\n' +
+                '- Your PR can only modify `developers/YOUR_USERNAME/` folder\n' +
+                '- You cannot modify multiple developer folders in one PR\n\n' +
+                '**How to fix:**\n' +
+                '1. Fork the repository to your own GitHub account\n' +
+                '2. Create a branch in your fork\n' +
+                '3. Only modify files in `developers/YOUR_USERNAME/` folder\n' +
+                '4. Submit PR from your fork\n\n' +
+                '---\n' +
+                '*This is an automated action. The agent-index enforces all policies in code with no gatekeepers.*'
+            });
+
+            // Close the PR
+            await github.rest.pulls.update({
+              ...context.repo,
+              pull_number: pr_number,
+              state: 'closed'
+            });
+
+            console.log(`Closed PR #${pr_number} due to developer ownership violation`);
+
       # Core policy checks
       - name: Load PR details
         if: steps.scope.outputs.outside == 'true'

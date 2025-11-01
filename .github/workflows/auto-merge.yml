@@ -37,7 +37,7 @@ jobs:
             gh label create "agent-submission" --description "PR modifying agent metadata in developers/ folder" --color "0E8A16"
 
           gh label list --json name -q '.[].name' | grep -q "^auto-merge:eligible$" || \
-            gh label create "auto-merge:eligible" --description "PR passed all checks and will auto-merge" --color "0E8A16"
+            gh label create "auto-merge:eligible" --description "PR eligible for auto-merge" --color "0E8A16"
 
           gh label list --json name -q '.[].name' | grep -q "^auto-merge:rejected$" || \
             gh label create "auto-merge:rejected" --description "PR failed checks and requires manual review" --color "D93F0B"
@@ -218,7 +218,7 @@ jobs:
           gh pr edit ${{ steps.pr.outputs.number }} --add-label "auto-merge:eligible"
 
           # Approve PR
-          gh pr review ${{ steps.pr.outputs.number }} --approve --body "✅ Automated approval: YAML syntax and schema validation passed. Changes are limited to your developer folder. Commits passed verification checks. Note: Validation checks format and structure only, not agent functionality or security."
+          gh pr review ${{ steps.pr.outputs.number }} --approve --body "Automated approval: YAML syntax and schema checks completed. Changes are limited to your developer folder. Commits are signed. Note: These checks verify format and structure only, not agent functionality or content security."
         env:
           GH_TOKEN: ${{ steps.app-token.outputs.token }}
 

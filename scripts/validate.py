@@ -13,6 +13,13 @@ Structure validated:
             versions.yaml               # Against versions.schema.json
             {version}.yaml              # Against agent-version.schema.json (0.1.0.yaml, etc.)
 
+File type restrictions:
+    - Only .yaml files allowed (lowercase extension required, case-sensitive)
+    - No hidden files (no files starting with .)
+    - No symbolic links
+    - Max 100 KB per YAML file
+    - Max 10 MB total per developer folder
+
 Note: This validation checks syntax and schema compliance but does
 not verify agent functionality, quality, or security.
 
@@ -32,12 +39,18 @@ from typing import List, Tuple
 import yaml
 from jsonschema import Draft7Validator, ValidationError
 
-# GitHub username validation to help mitigate path traversal and hidden folder attacks
+# GitHub username validation (alphanumeric with hyphens)
 VALID_DEVELOPER_NAME = re.compile(r'^[a-zA-Z0-9]([a-zA-Z0-9-]*[a-zA-Z0-9])?$')
 
-# YAML size and complexity limits to help mitigate resource exhaustion attacks
+# YAML size and complexity limits
 MAX_YAML_SIZE = 100 * 1024  # 100 KB per file
 MAX_YAML_COMPLEXITY = 1000  # Max nodes in YAML tree
+
+# File type restrictions
+ALLOWED_FILE_EXTENSIONS = {'.yaml'}
+
+# File size limits
+MAX_DEVELOPER_FOLDER_SIZE = 10 * 1024 * 1024  # 10 MB total per developer
 
 
 def load_schema(schema_path: Path) -> dict:
@@ -86,6 +99,59 @@ def load_yaml(yaml_path: Path) -> dict:
         )
 
     return data
+
+
+def validate_file_types_and_sizes(developer_folder: Path) -> List[str]:
+    """
+    Validate file types and sizes in a developer folder.
+
+    Returns:
+        List of error messages (empty if valid)
+    """
+    errors = []
+    total_size = 0
+
+    for file_path in developer_folder.rglob('*'):
+        # Reject symbolic links (not permitted)
+        if file_path.is_symlink():
+            errors.append(
+                f"  - {file_path.relative_to(developer_folder)}: "
+                f"Symbolic links not allowed"
+            )
+            continue
+
+        if not file_path.is_file():
+            continue
+
+        # Reject ALL hidden files (no exceptions - no .gitkeep, no .gitignore)
+        if file_path.name.startswith('.'):
+            errors.append(
+                f"  - {file_path.relative_to(developer_folder)}: "
+                f"Hidden files not allowed"
+            )
+            continue
+
+        # Case-sensitive extension check (must be exactly .yaml, not .YAML or .YaML)
+        ext = file_path.suffix
+        file_size = file_path.stat().st_size
+        total_size += file_size
+
+        # Check file extension
+        if ext not in ALLOWED_FILE_EXTENSIONS:
+            errors.append(
+                f"  - {file_path.relative_to(developer_folder)}: "
+                f"Disallowed file type '{ext}' (only lowercase .yaml extension allowed)"
+            )
+            continue
+
+    # Check total developer folder size
+    if total_size > MAX_DEVELOPER_FOLDER_SIZE:
+        errors.append(
+            f"  - Total folder size {total_size} bytes exceeds limit "
+            f"({MAX_DEVELOPER_FOLDER_SIZE} bytes = {MAX_DEVELOPER_FOLDER_SIZE // (1024*1024)} MB)"
+        )
+
+    return errors
 
 
 def validate_file(yaml_path: Path, schema: dict, validator: Draft7Validator) -> List[str]:
@@ -163,6 +229,15 @@ def validate_developers(base_path: Path, developer_folder: str = None) -> Tuple[
             print(f"  - Invalid folder name format: '{developer_name}'")
             print(f"  - Must match GitHub username rules: ^[a-zA-Z0-9]([a-zA-Z0-9-]*[a-zA-Z0-9])?$")
             print(f"  - Start/end with alphanumeric, middle can contain hyphens")
+            error_count += 1
+            continue
+
+        # Check file types and sizes BEFORE reading files
+        file_type_errors = validate_file_types_and_sizes(profile_file.parent)
+        if file_type_errors:
+            print(f"\n❌ {profile_file.relative_to(base_path)}")
+            for error in file_type_errors:
+                print(error)
             error_count += 1
             continue
 
@@ -247,6 +322,15 @@ def validate_agents(base_path: Path, developer_folder: str = None) -> Tuple[int,
         agent_name = agent_dir.name
         has_errors = False
         all_errors = []
+
+        # Check file types and sizes BEFORE reading files
+        file_type_errors = validate_file_types_and_sizes(agent_dir)
+        if file_type_errors:
+            print(f"\n❌ {agent_dir.relative_to(base_path)}/")
+            for error in file_type_errors:
+                print(error)
+            error_count += 1
+            continue
 
         # Validate agent.yaml (identity)
         agent_yaml = agent_dir / "agent.yaml"
