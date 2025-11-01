@@ -126,7 +126,7 @@ jobs:
             await github.rest.issues.createComment({
               ...context.repo,
               issue_number: pr_number,
-              body: `❌ **Developer Ownership Violation**
+              body: `**Developer Ownership Violation**
 
 This PR has been automatically closed because it violates developer folder ownership rules.
 

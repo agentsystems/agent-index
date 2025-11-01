@@ -77,7 +77,7 @@ jobs:
             await github.rest.issues.createComment({
               ...context.repo,
               issue_number: pr_number,
-              body: `❌ **Validation Failed**
+              body: `**Validation Failed**
 
 This PR has been automatically closed because it failed validation checks.
 
