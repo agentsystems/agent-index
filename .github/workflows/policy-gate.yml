@@ -126,23 +126,19 @@ jobs:
             await github.rest.issues.createComment({
               ...context.repo,
               issue_number: pr_number,
-              body: `**Developer Ownership Violation**
-
-This PR has been automatically closed because it violates developer folder ownership rules.
-
-**Rules:**
-- PRs must come from a fork owned by you (not someone else's fork)
-- Your PR can only modify \`developers/YOUR_USERNAME/\` folder
-- You cannot modify multiple developer folders in one PR
-
-**How to fix:**
-1. Fork the repository to your own GitHub account
-2. Create a branch in your fork
-3. Only modify files in \`developers/YOUR_USERNAME/\` folder
-4. Submit PR from your fork
-
----
-*This is an automated action. The agent-index enforces all policies in code with no gatekeepers.*`
+              body: '**Developer Ownership Violation**\n\n' +
+                'This PR has been automatically closed because it violates developer folder ownership rules.\n\n' +
+                '**Rules:**\n' +
+                '- PRs must come from a fork owned by you (not someone else\'s fork)\n' +
+                '- Your PR can only modify `developers/YOUR_USERNAME/` folder\n' +
+                '- You cannot modify multiple developer folders in one PR\n\n' +
+                '**How to fix:**\n' +
+                '1. Fork the repository to your own GitHub account\n' +
+                '2. Create a branch in your fork\n' +
+                '3. Only modify files in `developers/YOUR_USERNAME/` folder\n' +
+                '4. Submit PR from your fork\n\n' +
+                '---\n' +
+                '*This is an automated action. The agent-index enforces all policies in code with no gatekeepers.*'
             });
 
             // Close the PR

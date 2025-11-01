@@ -77,20 +77,16 @@ jobs:
             await github.rest.issues.createComment({
               ...context.repo,
               issue_number: pr_number,
-              body: `**Validation Failed**
-
-This PR has been automatically closed because it failed validation checks.
-
-**Common issues:**
-- Invalid YAML syntax or schema violations
-- Disallowed file types (only lowercase .yaml extension allowed, case-sensitive)
-- Hidden files or symbolic links (not permitted)
-- File size limits exceeded (100 KB per YAML file, 10 MB total per developer folder)
-
-Please review the validation errors above, fix the issues, and submit a new PR.
-
----
-*This is an automated action. The agent-index enforces all policies in code with no gatekeepers.*`
+              body: '**Validation Failed**\n\n' +
+                'This PR has been automatically closed because it failed validation checks.\n\n' +
+                '**Common issues:**\n' +
+                '- Invalid YAML syntax or schema violations\n' +
+                '- Disallowed file types (only lowercase .yaml extension allowed, case-sensitive)\n' +
+                '- Hidden files or symbolic links (not permitted)\n' +
+                '- File size limits exceeded (100 KB per YAML file, 10 MB total per developer folder)\n\n' +
+                'Please review the validation errors above, fix the issues, and submit a new PR.\n\n' +
+                '---\n' +
+                '*This is an automated action. The agent-index enforces all policies in code with no gatekeepers.*'
             });
 
             // Close the PR
