@@ -1,0 +1,134 @@
+# AgentSystems Agent Metadata
+#
+# This file contains version-specific attributes for your agent.
+# These can change between releases as you upgrade models, add features, etc.
+#
+# When you publish to the agent-index, this file becomes {version}.yaml
+# (e.g., 0.1.0.yaml, 0.2.0.yaml) to maintain version history.
+
+# ============================================================================
+# VERSION METADATA
+# ============================================================================
+
+version: "0.1.2"  # Semantic version: x.y.z or x.y.z-beta.1 (used as container image tag)
+
+# ============================================================================
+# MATURITY & ACCESS
+# ============================================================================
+
+readiness_level: beta         # experimental | beta | production | deprecated
+
+container_image_access: public   # public | private
+source_repository_access: public # public | private
+
+# ============================================================================
+# DEPENDENCIES
+# ============================================================================
+
+model_dependencies:
+  - gpt-oss:20b
+
+required_egress:
+  - https://www.reddit.com  # Reddit for authentication
+  - https://oauth.reddit.com   # Reddit API for fetching posts/comments
+
+required_integrations: []
+
+# ============================================================================
+# CREDENTIALS & SETUP
+# ============================================================================
+
+required_credentials:
+    - name: REDDIT_CLIENT_ID
+      description: Reddit API client ID
+    - name: REDDIT_CLIENT_SECRET
+      description: Reddit API client secret
+    - name: REDDIT_USER_AGENT
+      description: User agent string (e.g., "myapp:v1.0.0")
+
+setup_instructions: |
+    1. Go to https://www.reddit.com/prefs/apps
+    2. Click "Create App" and select "script" type
+    3. Copy the Client ID (under app name) and Secret
+    4. Create a user agent string like "myapp:v1.0.0"
+
+# ============================================================================
+# I/O SPECIFICATION
+# ============================================================================
+
+input_types:
+  - type: text
+    mime_types: [text/plain]
+
+output_types:
+  - type: json
+    mime_types: [application/json]
+  - type: markdown
+    mime_types: [text/markdown]
+  - type: pdf
+    mime_types: [application/pdf]
+
+input_schema:
+  subreddit:
+    type: string
+    required: true
+    label: "Subreddit"
+    description: "Name of the subreddit to analyze (e.g., 'selfhosted' without r/)"
+  research_question:
+    type: string
+    required: true
+    label: "Research Question"
+    description: "The specific question you want answered about this community"
+  time_period_days:
+    type: integer
+    required: false
+    label: "Time Period (Days)"
+    description: "How many days back to analyze (default: 7, recommended: 7-14)"
+    default: 7
+
+# ============================================================================
+# BEHAVIORAL CHARACTERISTICS
+# ============================================================================
+
+facets:
+  context: professional      # personal | professional | general
+  autonomy: Auto-pilot      # Assist | Co-pilot | Auto-pilot
+  latency: batch            # real-time | interactive | near-real-time | batch
+  cost_profile: free        # free | $/task | $/month | $/hour
+  modalities: [text]        # text | image | audio | video
+  domains: [market-research, community-analysis, sentiment-analysis]
+  model_tooling: [LLM]      # LLM | RAG | fine-tuned | embeddings
+  industries: []            # legal | healthcare | finance
+  integrations: []          # Google Drive | Gmail | Slack
+
+# ============================================================================
+# RELEASE NOTES (supports markdown)
+# ============================================================================
+
+release_notes: |
+  ## Initial Release
+
+  First public release of the Subreddit Research Agent.
+
+  ### Features
+  - Analyze subreddit discussions to answer specific research questions
+  - AI-powered keyword generation for targeted search
+  - Intelligent thread filtering with relevance scoring
+  - Deep analysis of posts and comments (up to 50 comments per thread)
+  - Evidence-based synthesis with strength ratings (strong/moderate/weak)
+  - Strategic recommendations with priority levels
+  - Professional reports in JSON, Markdown, and PDF formats
+
+  ### Use Cases
+  - Market research and product validation
+  - Community sentiment analysis
+  - Competitive intelligence gathering
+  - User research and pain point discovery
+
+  ### Dependencies
+  - gpt-oss:20b model
+  - Reddit API (free developer credentials required)
+
+  ### Recommended Settings
+  - Time period: 7-14 days for best balance of recency and sample size
+  - Expected runtime: ~2.5 minutes per day of lookback (~35 minutes for 14 days)
