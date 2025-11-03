@@ -12,12 +12,12 @@
     },
     "listed_versions": {
       "type": "array",
-      "description": "Versions visible in discovery (each must match an existing {version}.yaml file)",
+      "description": "Versions visible in discovery (each must match an existing {version}.yaml file). Empty array = agent unlisted from index.",
       "items": {
         "type": "string",
         "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+(-[a-z0-9.]+)?$"
       },
-      "minItems": 1,
+      "minItems": 0,
       "uniqueItems": true
     }
   }

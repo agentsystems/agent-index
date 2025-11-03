@@ -202,7 +202,7 @@ Controls which versions are latest and visible.
 
 *Required:*
 - `latest_version` - Latest version (must match an existing {version}.yaml file, e.g., "0.1.0")
-- `listed_versions` - Array of versions visible in discovery (each must match an existing {version}.yaml file)
+- `listed_versions` - Array of versions visible in discovery (each must match an existing {version}.yaml file). Use empty array `[]` to temporarily unlist your agent from the index
 
 **{version}.yaml - Complete Specifications:**
 
