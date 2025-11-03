@@ -3,5 +3,9 @@
 
 latest_version: "0.1.0"
 
+# Versions visible in discovery (empty array = agent unlisted from index)
 listed_versions:
   - "0.1.0"
+
+# To temporarily unlist your agent from the index:
+# listed_versions: []
